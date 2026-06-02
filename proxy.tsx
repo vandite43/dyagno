@@ -14,7 +14,22 @@ function isPublic(pathname: string): boolean {
 
 export async function proxy(request: NextRequest) {
   const { pathname } = request.nextUrl;
-  const { supabaseResponse, user, supabase } = await updateSession(request);
+
+  // If Supabase isn't configured, allow public paths and redirect others to login
+  let supabaseResponse = NextResponse.next({ request });
+  let user: { id: string; created_at: string } | null = null;
+  let supabase: Awaited<ReturnType<typeof updateSession>>["supabase"] | null = null;
+
+  try {
+    const session = await updateSession(request);
+    supabaseResponse = session.supabaseResponse;
+    user = session.user;
+    supabase = session.supabase;
+  } catch (err) {
+    console.error("Middleware: Supabase session error:", err);
+    if (isPublic(pathname)) return NextResponse.next({ request });
+    return NextResponse.redirect(new URL("/login", request.url));
+  }
 
   if (user && AUTH_PATHS.includes(pathname)) {
     return NextResponse.redirect(new URL("/dashboard", request.url));
@@ -33,7 +48,7 @@ export async function proxy(request: NextRequest) {
   const trialEndsAt = new Date(createdAt.getTime() + 7 * 24 * 60 * 60 * 1000);
   const inTrial = new Date() < trialEndsAt;
 
-  if (!inTrial) {
+  if (!inTrial && supabase) {
     const { data: subscription } = await supabase
       .from("subscriptions")
       .select("status")
