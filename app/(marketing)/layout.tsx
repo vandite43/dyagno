@@ -14,10 +14,10 @@ export default function MarketingLayout({
           <Link href="/" className="flex items-center">
             <DyagnoLogo size={32} variant="dark" showWordmark />
           </Link>
-          <nav className="flex items-center gap-6">
+          <nav className="flex items-center gap-2 sm:gap-6">
             <Link
               href="/pricing"
-              className="text-sm text-warm-gold/70 hover:text-warm-gold transition-colors"
+              className="hidden sm:block text-sm text-warm-gold/70 hover:text-warm-gold transition-colors"
             >
               Pricing
             </Link>
@@ -25,7 +25,7 @@ export default function MarketingLayout({
               <Button
                 variant="ghost"
                 size="sm"
-                className="text-warm-gold/70 hover:text-warm-gold hover:bg-dark-carbon"
+                className="hidden sm:inline-flex text-warm-gold/70 hover:text-warm-gold hover:bg-dark-carbon"
               >
                 Sign in
               </Button>
@@ -46,7 +46,7 @@ export default function MarketingLayout({
         <div className="max-w-6xl mx-auto px-4 sm:px-6 flex flex-col sm:flex-row items-center justify-between gap-4">
           <DyagnoLogo size={24} variant="dark" showWordmark />
           <p className="text-xs text-warm-gold/30">
-            Â© {new Date().getFullYear()} Dyagno. Appliance Repair Intelligence.
+            &copy; {new Date().getFullYear()} Dyagno. Appliance Repair Intelligence.
           </p>
           <nav className="flex gap-4 text-xs text-warm-gold/40">
             <Link href="/pricing" className="hover:text-warm-gold/70">

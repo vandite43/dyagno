@@ -62,20 +62,20 @@ export function DiagramPanel() {
         <h2 className="text-base font-semibold text-warm-gold mb-4" style={{ fontFamily: "var(--font-space-grotesk)" }}>
           Parts Diagrams
         </h2>
-        <form onSubmit={handleSearch} className="flex gap-3 items-end">
-          <div className="space-y-1.5 flex-1 max-w-xs">
+        <form onSubmit={handleSearch} className="flex flex-col sm:flex-row gap-2 sm:items-end">
+          <div className="space-y-1.5 flex-1">
             <Label className="text-xs text-warm-gold/60">Model Number</Label>
             <Input
               value={modelNumber}
               onChange={(e) => setModelNumber(e.target.value)}
               placeholder="e.g. WDT780SAEM1"
-              className="bg-dark-chrome border-steel-border text-warm-gold placeholder:text-warm-gold/25 h-9 text-sm focus-visible:ring-forge-amber"
+              className="bg-dark-chrome border-steel-border text-warm-gold placeholder:text-warm-gold/25 h-11 text-sm focus-visible:ring-forge-amber"
             />
           </div>
           <Button
             type="submit"
             disabled={loading || !modelNumber.trim()}
-            className="bg-forge-amber text-ink font-semibold hover:bg-forge-amber/90 h-9 shrink-0 gap-1.5 disabled:opacity-40"
+            className="bg-forge-amber text-ink font-semibold hover:bg-forge-amber/90 h-11 w-full sm:w-auto shrink-0 gap-1.5 disabled:opacity-40"
           >
             <Search size={14} />
             {loading ? "Looking up..." : "Find Diagrams"}

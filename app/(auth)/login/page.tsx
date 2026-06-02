@@ -19,35 +19,48 @@ function LoginForm() {
   const [password, setPassword] = useState("");
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
+  const [unconfirmed, setUnconfirmed] = useState(false);
+  const [resendState, setResendState] = useState<"idle" | "sending" | "sent">("idle");
 
   async function handleEmailLogin(e: React.FormEvent) {
     e.preventDefault();
     setLoading(true);
     setError(null);
+    setUnconfirmed(false);
 
     const supabase = createClient();
-    const { error } = await supabase.auth.signInWithPassword({
-      email,
-      password,
-    });
+    const { data, error } = await supabase.auth.signInWithPassword({ email, password });
 
     if (error) {
-      setError(error.message);
+      if (error.message.toLowerCase().includes("email not confirmed")) {
+        setUnconfirmed(true);
+      } else {
+        setError("Invalid email or password.");
+      }
       setLoading(false);
     } else {
+      // Ensure profile row exists (email signups skip the OAuth callback)
+      if (data.user) {
+        await supabase.from("profiles").upsert(
+          { id: data.user.id, full_name: data.user.user_metadata?.full_name ?? null },
+          { onConflict: "id", ignoreDuplicates: true }
+        );
+      }
       router.push(next);
       router.refresh();
     }
   }
 
-  async function handleGoogleLogin() {
+  async function handleResend() {
+    setResendState("sending");
     const supabase = createClient();
-    await supabase.auth.signInWithOAuth({
-      provider: "google",
-      options: {
-        redirectTo: `${process.env.NEXT_PUBLIC_APP_URL}/auth/callback?next=${next}`,
-      },
-    });
+    const { error } = await supabase.auth.resend({ type: "signup", email });
+    if (error) {
+      setError(error.message);
+      setResendState("idle");
+    } else {
+      setResendState("sent");
+    }
   }
 
   return (
@@ -103,6 +116,26 @@ function LoginForm() {
           </p>
         )}
 
+        {unconfirmed && (
+          <div className="rounded-md border border-forge-amber/30 bg-forge-amber/10 px-4 py-3 space-y-2">
+            <p className="text-sm text-warm-gold">
+              Please confirm your email before signing in.
+            </p>
+            {resendState === "sent" ? (
+              <p className="text-xs text-forge-amber font-medium">Confirmation email sent — check your inbox.</p>
+            ) : (
+              <button
+                type="button"
+                onClick={handleResend}
+                disabled={resendState === "sending"}
+                className="text-xs text-forge-amber underline underline-offset-4 hover:text-warm-gold disabled:opacity-50"
+              >
+                {resendState === "sending" ? "Sending..." : "Resend confirmation email"}
+              </button>
+            )}
+          </div>
+        )}
+
         <Button
           type="submit"
           disabled={loading}
@@ -111,24 +144,6 @@ function LoginForm() {
           {loading ? "Signing in..." : "Sign in"}
         </Button>
       </form>
-
-      <div className="relative">
-        <div className="absolute inset-0 flex items-center">
-          <span className="w-full border-t border-steel-border" />
-        </div>
-        <div className="relative flex justify-center text-xs uppercase">
-          <span className="bg-dark-chrome px-2 text-warm-gold/40">or</span>
-        </div>
-      </div>
-
-      <Button
-        type="button"
-        variant="outline"
-        onClick={handleGoogleLogin}
-        className="w-full border-steel-border text-warm-gold/80 hover:bg-dark-carbon hover:text-warm-gold"
-      >
-        Continue with Google
-      </Button>
 
       <p className="text-center text-sm text-warm-gold/50">
         No account?{" "}

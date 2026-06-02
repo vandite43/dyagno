@@ -41,16 +41,6 @@ export default function SignupPage() {
     }
   }
 
-  async function handleGoogleSignup() {
-    const supabase = createClient();
-    await supabase.auth.signInWithOAuth({
-      provider: "google",
-      options: {
-        redirectTo: `${process.env.NEXT_PUBLIC_APP_URL}/auth/callback`,
-      },
-    });
-  }
-
   return (
     <div className="w-full max-w-sm space-y-8">
       <div className="flex flex-col items-center gap-3">
@@ -127,24 +117,6 @@ export default function SignupPage() {
           {loading ? "Creating account..." : "Create account"}
         </Button>
       </form>
-
-      <div className="relative">
-        <div className="absolute inset-0 flex items-center">
-          <span className="w-full border-t border-steel-border" />
-        </div>
-        <div className="relative flex justify-center text-xs uppercase">
-          <span className="bg-dark-chrome px-2 text-warm-gold/40">or</span>
-        </div>
-      </div>
-
-      <Button
-        type="button"
-        variant="outline"
-        onClick={handleGoogleSignup}
-        className="w-full border-steel-border text-warm-gold/80 hover:bg-dark-carbon hover:text-warm-gold"
-      >
-        Continue with Google
-      </Button>
 
       <p className="text-center text-sm text-warm-gold/50">
         Already have an account?{" "}

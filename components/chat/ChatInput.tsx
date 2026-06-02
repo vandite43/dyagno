@@ -81,10 +81,10 @@ export function ChatInput({ onSend, onUploadImage, isLoading }: ChatInputProps) 
           type="button"
           disabled={busy}
           onClick={() => fileRef.current?.click()}
-          className="shrink-0 w-9 h-9 flex items-center justify-center rounded-lg text-warm-gold/40 hover:text-forge-amber hover:bg-dark-chrome transition-colors disabled:opacity-40"
+          className="shrink-0 w-11 h-11 flex items-center justify-center rounded-lg text-warm-gold/40 hover:text-forge-amber hover:bg-dark-chrome transition-colors disabled:opacity-40"
           title="Attach photo"
         >
-          <ImagePlus size={16} />
+          <ImagePlus size={18} />
         </button>
 
         <input
@@ -99,16 +99,16 @@ export function ChatInput({ onSend, onUploadImage, isLoading }: ChatInputProps) 
           }}
           placeholder="Describe the fault, error code, or symptom..."
           disabled={busy}
-          className="flex-1 h-9 rounded-lg border border-steel-border bg-dark-chrome text-warm-gold placeholder:text-warm-gold/30 px-3 text-sm focus:outline-none focus:ring-1 focus:ring-forge-amber disabled:opacity-50"
+          className="flex-1 h-11 rounded-lg border border-steel-border bg-dark-chrome text-warm-gold placeholder:text-warm-gold/30 px-3 text-sm focus:outline-none focus:ring-1 focus:ring-forge-amber disabled:opacity-50"
         />
 
         <Button
           type="submit"
           size="icon"
           disabled={busy || (!text.trim() && !pendingImages.length)}
-          className="shrink-0 w-9 h-9 bg-forge-amber text-ink hover:bg-forge-amber/90 disabled:opacity-40"
+          className="shrink-0 w-11 h-11 bg-forge-amber text-ink hover:bg-forge-amber/90 disabled:opacity-40"
         >
-          <Send size={15} />
+          <Send size={16} />
         </Button>
       </form>
       </div>

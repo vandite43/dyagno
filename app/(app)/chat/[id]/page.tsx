@@ -88,7 +88,7 @@ export default function ChatPage({ params }: ChatPageProps) {
   const isLoading = status === "streaming" || status === "submitted";
 
   return (
-    <div className="flex flex-col h-[calc(100vh-3.5rem)]">
+    <div className="flex flex-col h-[calc(100dvh-3.5rem)]">
       {applianceType && (
         <div className="border-b border-steel-border bg-dark-carbon shrink-0 px-4 py-2 flex items-center">
           <span className="text-xs text-warm-gold/50 bg-dark-chrome border border-steel-border rounded-full px-3 py-1">

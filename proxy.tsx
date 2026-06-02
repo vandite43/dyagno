@@ -28,15 +28,21 @@ export async function proxy(request: NextRequest) {
     return NextResponse.redirect(loginUrl);
   }
 
-  // Stripe billing disabled — uncomment below to re-enable subscription gate
-  // const { data: subscription } = await supabase
-  //   .from("subscriptions")
-  //   .select("status")
-  //   .eq("user_id", user.id)
-  //   .single();
-  // const activeStatuses = ["active", "trialing"];
-  // const hasActiveSubscription = subscription && activeStatuses.includes(subscription.status);
-  // if (!hasActiveSubscription) return NextResponse.redirect(new URL("/pricing", request.url));
+  // 7-day free trial — allow access if account is less than 7 days old
+  const createdAt = new Date(user.created_at);
+  const trialEndsAt = new Date(createdAt.getTime() + 7 * 24 * 60 * 60 * 1000);
+  const inTrial = new Date() < trialEndsAt;
+
+  if (!inTrial) {
+    const { data: subscription } = await supabase
+      .from("subscriptions")
+      .select("status")
+      .eq("user_id", user.id)
+      .single();
+    const activeStatuses = ["active", "trialing"];
+    const hasActiveSubscription = subscription && activeStatuses.includes(subscription.status);
+    if (!hasActiveSubscription) return NextResponse.redirect(new URL("/pricing", request.url));
+  }
 
   return supabaseResponse;
 }

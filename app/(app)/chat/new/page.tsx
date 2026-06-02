@@ -22,14 +22,16 @@ const APPLIANCES = [
 export default function NewChatPage() {
   const router = useRouter();
   const [loading, setLoading] = useState<string | null>(null);
+  const [error, setError] = useState<string | null>(null);
 
   async function handleSelect(applianceId: string, applianceLabel: string) {
     setLoading(applianceId);
+    setError(null);
     const supabase = createClient();
     const { data: { user } } = await supabase.auth.getUser();
-    if (!user) return;
+    if (!user) { setLoading(null); return; }
 
-    const { data } = await supabase
+    const { data, error } = await supabase
       .from("conversations")
       .insert({ user_id: user.id, title: null, appliance_type: applianceLabel })
       .select("id")
@@ -37,6 +39,9 @@ export default function NewChatPage() {
 
     if (data) {
       router.replace(`/chat/${data.id}`);
+    } else {
+      setError(error?.message ?? "Failed to start diagnosis. Please try again.");
+      setLoading(null);
     }
   }
 
@@ -52,6 +57,12 @@ export default function NewChatPage() {
           </h1>
           <p className="text-warm-gold/50 text-sm">Select the appliance to get started</p>
         </div>
+
+        {error && (
+          <p className="text-sm text-red-400 bg-red-500/10 border border-red-400/30 rounded-lg px-4 py-2.5 text-center">
+            {error}
+          </p>
+        )}
 
         <div className="grid grid-cols-3 sm:grid-cols-4 gap-3">
           {APPLIANCES.map((a) => (

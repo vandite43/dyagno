@@ -81,29 +81,31 @@ export function PartLookupPanel({ applianceType }: PartLookupPanelProps) {
         <h2 className="text-base font-semibold text-warm-gold mb-4" style={{ fontFamily: "var(--font-space-grotesk)" }}>
           Part Lookup{applianceType ? ` — ${applianceType}` : ""}
         </h2>
-        <form onSubmit={handleSearch} className="flex gap-3 items-end">
-          <div className="space-y-1.5 w-44 shrink-0">
-            <Label className="text-xs text-warm-gold/60">Model Number</Label>
-            <Input
-              value={modelNumber}
-              onChange={(e) => setModelNumber(e.target.value)}
-              placeholder="e.g. WDT780SAEM1"
-              className="bg-dark-chrome border-steel-border text-warm-gold placeholder:text-warm-gold/25 h-9 text-sm focus-visible:ring-forge-amber"
-            />
-          </div>
-          <div className="space-y-1.5 flex-1">
-            <Label className="text-xs text-warm-gold/60">Symptom or Part Description</Label>
-            <Input
-              value={symptom}
-              onChange={(e) => setSymptom(e.target.value)}
-              placeholder="e.g. door latch broken, not draining, pump motor"
-              className="bg-dark-chrome border-steel-border text-warm-gold placeholder:text-warm-gold/25 h-9 text-sm focus-visible:ring-forge-amber"
-            />
+        <form onSubmit={handleSearch} className="flex flex-col sm:flex-row gap-2 sm:items-end">
+          <div className="flex gap-2 items-end">
+            <div className="space-y-1.5 w-36 shrink-0">
+              <Label className="text-xs text-warm-gold/60">Model Number</Label>
+              <Input
+                value={modelNumber}
+                onChange={(e) => setModelNumber(e.target.value)}
+                placeholder="e.g. WDT780SAEM1"
+                className="bg-dark-chrome border-steel-border text-warm-gold placeholder:text-warm-gold/25 h-11 text-sm focus-visible:ring-forge-amber"
+              />
+            </div>
+            <div className="space-y-1.5 flex-1">
+              <Label className="text-xs text-warm-gold/60">Symptom or Part</Label>
+              <Input
+                value={symptom}
+                onChange={(e) => setSymptom(e.target.value)}
+                placeholder="e.g. door latch broken"
+                className="bg-dark-chrome border-steel-border text-warm-gold placeholder:text-warm-gold/25 h-11 text-sm focus-visible:ring-forge-amber"
+              />
+            </div>
           </div>
           <Button
             type="submit"
             disabled={loading || (!modelNumber.trim() && !symptom.trim())}
-            className="bg-forge-amber text-ink font-semibold hover:bg-forge-amber/90 h-9 shrink-0 gap-1.5 disabled:opacity-40"
+            className="bg-forge-amber text-ink font-semibold hover:bg-forge-amber/90 h-11 w-full sm:w-auto shrink-0 gap-1.5 disabled:opacity-40"
           >
             <Search size={14} />
             {loading ? "Searching…" : "Search"}
@@ -140,24 +142,24 @@ export function PartLookupPanel({ applianceType }: PartLookupPanelProps) {
                 <p className="text-xs text-warm-gold/40 font-semibold uppercase tracking-wider">Identified Parts</p>
                 <div className="flex flex-col gap-2">
                   {parts.map((p, i) => (
-                    <div key={i} className="flex items-center justify-between gap-4 bg-dark-chrome rounded-xl border border-steel-border px-4 py-3">
-                      <div className="min-w-0 flex items-baseline gap-2 flex-wrap">
-                        <span className="font-mono text-sm text-forge-amber font-semibold shrink-0">{p.number}</span>
+                    <div key={i} className="flex flex-col gap-2 bg-dark-chrome rounded-xl border border-steel-border px-4 py-3">
+                      <div className="min-w-0">
+                        <span className="font-mono text-sm text-forge-amber font-semibold">{p.number}</span>
                         {p.description && (
-                          <span className="text-xs text-warm-gold/60 leading-relaxed">{p.description}</span>
+                          <span className="text-xs text-warm-gold/60 leading-relaxed ml-2">{p.description}</span>
                         )}
                       </div>
-                      <div className="flex gap-1.5 shrink-0">
+                      <div className="flex gap-2 flex-wrap">
                         {partLinks(p.number).map((link) => (
                           <a
                             key={link.label}
                             href={link.href}
                             target="_blank"
                             rel="noopener noreferrer"
-                            className="text-[11px] text-forge-amber/70 hover:text-forge-amber border border-forge-amber/25 hover:border-forge-amber/60 rounded-md px-2 py-1 flex items-center gap-1 transition-colors whitespace-nowrap"
+                            className="text-xs text-forge-amber/70 hover:text-forge-amber border border-forge-amber/25 hover:border-forge-amber/60 rounded-md px-3 py-1.5 flex items-center gap-1 transition-colors whitespace-nowrap"
                           >
                             {link.label}
-                            <ExternalLink size={9} />
+                            <ExternalLink size={10} />
                           </a>
                         ))}
                       </div>

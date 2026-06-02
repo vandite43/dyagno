@@ -67,7 +67,7 @@ export function DiagnosisList({ initialConversations }: { initialConversations: 
       )}
 
       {conversations.length === 0 ? (
-        <div className="rounded-2xl border border-dashed border-steel-border bg-dark-carbon p-16 text-center space-y-4">
+        <div className="rounded-2xl border border-dashed border-steel-border bg-dark-carbon p-8 sm:p-16 text-center space-y-4">
           <p className="text-warm-gold/40 text-sm">No diagnoses yet.</p>
           <Link href="/chat/new">
             <Button className="bg-forge-amber text-ink font-semibold hover:bg-forge-amber/90">

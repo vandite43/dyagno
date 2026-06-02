@@ -22,6 +22,9 @@ export default async function SettingsPage() {
     .eq("user_id", user.id)
     .single();
 
+  const trialEndsAt = new Date(new Date(user.created_at).getTime() + 7 * 24 * 60 * 60 * 1000);
+  const inTrial = !sub && new Date() < trialEndsAt;
+
   return (
     <div className="max-w-2xl mx-auto px-4 py-10 space-y-10">
       <h1
@@ -51,6 +54,21 @@ export default async function SettingsPage() {
       </section>
 
       <Separator className="bg-steel-border" />
+
+      {/* Trial banner */}
+      {inTrial && (
+        <section className="rounded-xl border border-forge-amber/40 bg-forge-amber/10 px-6 py-4 flex items-center justify-between gap-4">
+          <div>
+            <p className="text-sm font-semibold text-warm-gold">Free trial active</p>
+            <p className="text-xs text-warm-gold/60 mt-0.5">
+              Your trial ends on {trialEndsAt.toLocaleDateString("en-US", { month: "long", day: "numeric", year: "numeric" })}
+            </p>
+          </div>
+          <span className="text-xs font-semibold text-forge-amber bg-forge-amber/20 border border-forge-amber/30 rounded-full px-3 py-1 shrink-0">
+            7-day trial
+          </span>
+        </section>
+      )}
 
       {/* Billing section */}
       <BillingSection subscription={sub} />
