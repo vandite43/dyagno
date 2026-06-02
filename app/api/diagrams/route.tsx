@@ -25,7 +25,7 @@ export async function POST(req: NextRequest) {
   const result = streamText({
     model: anthropic("claude-sonnet-4-6"),
     system: DIAGRAMS_SYSTEM_PROMPT,
-    maxTokens: 1024,
+
     messages: [{ role: "user", content: `Model number: ${modelNumber}` }],
   });
 

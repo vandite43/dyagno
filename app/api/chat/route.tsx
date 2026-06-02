@@ -35,7 +35,7 @@ export async function POST(req: NextRequest) {
   const result = streamText({
     model: anthropic("claude-sonnet-4-6"),
     system: DYAGNO_SYSTEM_PROMPT,
-    maxTokens: 2048,
+
     messages: await convertToModelMessages(messages),
     onFinish: async ({ text }) => {
       if (!conversationId) return;
