@@ -1,0 +1,166 @@
+"use client";
+
+import { Suspense, useState } from "react";
+import Link from "next/link";
+import { useRouter, useSearchParams } from "next/navigation";
+import { createClient } from "@/lib/supabase/browser";
+import { DyagnoLogo } from "@/components/brand";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+
+function LoginForm() {
+  const router = useRouter();
+  const searchParams = useSearchParams();
+  const rawNext = searchParams.get("next") ?? "/dashboard";
+  const next = rawNext.startsWith("/") && !rawNext.startsWith("//") ? rawNext : "/dashboard";
+
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
+  const [error, setError] = useState<string | null>(null);
+  const [loading, setLoading] = useState(false);
+
+  async function handleEmailLogin(e: React.FormEvent) {
+    e.preventDefault();
+    setLoading(true);
+    setError(null);
+
+    const supabase = createClient();
+    const { error } = await supabase.auth.signInWithPassword({
+      email,
+      password,
+    });
+
+    if (error) {
+      setError(error.message);
+      setLoading(false);
+    } else {
+      router.push(next);
+      router.refresh();
+    }
+  }
+
+  async function handleGoogleLogin() {
+    const supabase = createClient();
+    await supabase.auth.signInWithOAuth({
+      provider: "google",
+      options: {
+        redirectTo: `${process.env.NEXT_PUBLIC_APP_URL}/auth/callback?next=${next}`,
+      },
+    });
+  }
+
+  return (
+    <div className="w-full max-w-sm space-y-8">
+      <div className="flex flex-col items-center gap-3">
+        <DyagnoLogo size={48} variant="dark" />
+        <div className="text-center">
+          <h1
+            className="text-2xl font-bold text-warm-gold"
+            style={{ fontFamily: "var(--font-space-grotesk)" }}
+          >
+            Sign in to Dyagno
+          </h1>
+          <p className="mt-1 text-sm text-warm-gold/60">
+            Appliance repair intelligence
+          </p>
+        </div>
+      </div>
+
+      <form onSubmit={handleEmailLogin} className="space-y-4">
+        <div className="space-y-2">
+          <Label htmlFor="email" className="text-warm-gold/80">
+            Email
+          </Label>
+          <Input
+            id="email"
+            type="email"
+            placeholder="you@example.com"
+            value={email}
+            onChange={(e) => setEmail(e.target.value)}
+            required
+            className="bg-dark-carbon border-steel-border text-warm-gold placeholder:text-warm-gold/30 focus-visible:ring-forge-amber"
+          />
+        </div>
+        <div className="space-y-2">
+          <Label htmlFor="password" className="text-warm-gold/80">
+            Password
+          </Label>
+          <Input
+            id="password"
+            type="password"
+            placeholder="Your password"
+            value={password}
+            onChange={(e) => setPassword(e.target.value)}
+            required
+            className="bg-dark-carbon border-steel-border text-warm-gold placeholder:text-warm-gold/30 focus-visible:ring-forge-amber"
+          />
+        </div>
+
+        {error && (
+          <p className="text-sm text-destructive bg-destructive/10 rounded-md px-3 py-2">
+            {error}
+          </p>
+        )}
+
+        <Button
+          type="submit"
+          disabled={loading}
+          className="w-full bg-forge-amber text-ink font-semibold hover:bg-forge-amber/90"
+        >
+          {loading ? "Signing in..." : "Sign in"}
+        </Button>
+      </form>
+
+      <div className="relative">
+        <div className="absolute inset-0 flex items-center">
+          <span className="w-full border-t border-steel-border" />
+        </div>
+        <div className="relative flex justify-center text-xs uppercase">
+          <span className="bg-dark-chrome px-2 text-warm-gold/40">or</span>
+        </div>
+      </div>
+
+      <Button
+        type="button"
+        variant="outline"
+        onClick={handleGoogleLogin}
+        className="w-full border-steel-border text-warm-gold/80 hover:bg-dark-carbon hover:text-warm-gold"
+      >
+        Continue with Google
+      </Button>
+
+      <p className="text-center text-sm text-warm-gold/50">
+        No account?{" "}
+        <Link
+          href="/signup"
+          className="text-forge-amber hover:text-warm-gold underline underline-offset-4"
+        >
+          Sign up
+        </Link>
+      </p>
+    </div>
+  );
+}
+
+export default function LoginPage() {
+  return (
+    <Suspense
+      fallback={
+        <div className="w-full max-w-sm space-y-8 animate-pulse">
+          <div className="flex flex-col items-center gap-3">
+            <div className="w-12 h-12 rounded-lg bg-steel-border" />
+            <div className="h-8 w-40 rounded bg-steel-border" />
+          </div>
+          <div className="space-y-4">
+            <div className="h-10 rounded bg-steel-border" />
+            <div className="h-10 rounded bg-steel-border" />
+            <div className="h-10 rounded bg-forge-amber/30" />
+          </div>
+        </div>
+      }
+    >
+      <LoginForm />
+    </Suspense>
+  );
+}
