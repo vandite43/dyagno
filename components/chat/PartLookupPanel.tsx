@@ -22,23 +22,10 @@ function extractParts(text: string): PartResult[] {
 
 function partLinks(partName: string, modelNumber: string) {
   const q = encodeURIComponent(modelNumber ? `${modelNumber} ${partName}` : partName);
-  const partQ = encodeURIComponent(partName);
   return [
     {
       label: "RepairClinic",
       href: `https://www.repairclinic.com/Shop-For-Parts?query=${q}`,
-    },
-    {
-      label: "Sears Parts Direct",
-      href: `https://www.searspartsdirect.com/search?q=${q}`,
-    },
-    {
-      label: "AppliancePartsPros",
-      href: `https://www.appliancepartspros.com/search?q=${q}`,
-    },
-    {
-      label: "Amazon",
-      href: `https://www.amazon.com/s?k=${partQ}+${encodeURIComponent(modelNumber || "appliance")}&i=garden`,
     },
   ];
 }
