@@ -61,16 +61,20 @@ export default function ChatPage({ params }: ChatPageProps) {
   async function handleUploadImage(file: File): Promise<string> {
     const ext = MIME_TO_EXT[file.type];
     if (!ext) throw new Error("Unsupported file type. Use JPEG, PNG, WebP, or GIF.");
-    const { data: { user } } = await supabase.auth.getUser();
-    if (!user) throw new Error("Not authenticated");
-    const path = `${user.id}/${conversationId}/${Date.now()}.${ext}`;
-    await supabase.storage.from("diagnosis-images").upload(path, file);
-    const { data } = supabase.storage.from("diagnosis-images").getPublicUrl(path);
-    return data.publicUrl;
+
+    // Convert to base64 data URL so Claude receives the image data directly
+    // without needing to fetch from an external URL
+    return new Promise((resolve, reject) => {
+      const reader = new FileReader();
+      reader.onload = () => resolve(reader.result as string);
+      reader.onerror = reject;
+      reader.readAsDataURL(file);
+    });
   }
 
   async function handleSend(text: string, imageUrls: string[]) {
-    await supabase.from("messages").insert({ conversation_id: conversationId, role: "user", content: text, image_urls: imageUrls.length ? imageUrls : null });
+    // Don't store base64 data in the DB — store null for image_urls
+    await supabase.from("messages").insert({ conversation_id: conversationId, role: "user", content: text, image_urls: null });
 
     if (!titleSet && text) {
       await supabase.from("conversations").update({ title: text.slice(0, 60), updated_at: new Date().toISOString() }).eq("id", conversationId);
@@ -78,7 +82,11 @@ export default function ChatPage({ params }: ChatPageProps) {
     }
 
     if (imageUrls.length > 0) {
-      const fileParts: FileUIPart[] = imageUrls.map((url) => ({ type: "file", mediaType: "image/jpeg", url, filename: "image" }));
+      const fileParts: FileUIPart[] = imageUrls.map((url) => {
+        // Extract actual media type from data URL (e.g. "data:image/png;base64,..." → "image/png")
+        const mediaType = (url.match(/^data:([^;]+);/) ?? [])[1] ?? "image/jpeg";
+        return { type: "file", mediaType: mediaType as FileUIPart["mediaType"], url, filename: "image" };
+      });
       sendMessage({ parts: [{ type: "text", text }, ...fileParts], role: "user", id: crypto.randomUUID(), metadata: {} });
     } else {
       sendMessage({ text });
