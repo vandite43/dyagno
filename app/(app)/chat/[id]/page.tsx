@@ -25,7 +25,7 @@ export default function ChatPage({ params }: ChatPageProps) {
   const [titleSet, setTitleSet] = useState(false);
   const supabase = useMemo(() => createClient(), []);
 
-  const { messages, sendMessage, status, setMessages, error, reload } = useChat({
+  const { messages, sendMessage, status, setMessages, error } = useChat({
     transport: new DefaultChatTransport({
       api: "/api/chat",
       body: { conversationId },
@@ -106,8 +106,7 @@ export default function ChatPage({ params }: ChatPageProps) {
       )}
       {error && (
         <div className="shrink-0 px-4 py-2 bg-red-500/10 border-b border-red-400/20 flex items-center justify-between gap-3">
-          <p className="text-xs text-red-400">Something went wrong. Tap retry or send a new message.</p>
-          <button onClick={() => reload()} className="text-xs text-red-400 underline shrink-0">Retry</button>
+          <p className="text-xs text-red-400">Something went wrong. Send a new message to continue.</p>
         </div>
       )}
       <MessageList messages={messages} isLoading={isLoading} />
