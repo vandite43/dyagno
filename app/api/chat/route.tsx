@@ -4,11 +4,11 @@ import { createClient } from "@/lib/supabase/server";
 import { DYAGNO_SYSTEM_PROMPT } from "@/lib/ai/system-prompt";
 import type { NextRequest } from "next/server";
 
-type ContentBlock =
-  | { type: "text"; text: string }
-  | { type: "image"; source: { type: "base64"; mediaType: string; data: string } | { type: "url"; url: string } };
+type TextPart = { type: "text"; text: string };
+type ImagePart = { type: "image"; image: string; mimeType?: string };
+type ContentPart = TextPart | ImagePart;
 
-function buildMessages(rawMessages: any[]): { role: "user" | "assistant"; content: string | ContentBlock[] }[] {
+function buildMessages(rawMessages: any[]): { role: "user" | "assistant"; content: string | ContentPart[] }[] {
   return rawMessages.slice(0, 50).map((msg) => {
     const parts: any[] = msg.parts ?? [];
 
@@ -16,29 +16,23 @@ function buildMessages(rawMessages: any[]): { role: "user" | "assistant"; conten
       return { role: msg.role as "user" | "assistant", content: String(msg.content ?? "") };
     }
 
-    const blocks: ContentBlock[] = [];
+    const blocks: ContentPart[] = [];
 
     for (const part of parts) {
       if (part.type === "text" && typeof part.text === "string") {
         const text = part.text.slice(0, 4000);
         if (text) blocks.push({ type: "text", text });
       } else if (part.type === "file" && typeof part.url === "string") {
-        // Data URL — extract base64 directly
-        const match = part.url.match(/^data:([^;]+);base64,(.+)$/);
-        if (match) {
-          blocks.push({
-            type: "image",
-            source: { type: "base64", mediaType: match[1], data: match[2] },
-          });
-        } else if (part.url.startsWith("http")) {
-          blocks.push({ type: "image", source: { type: "url", url: part.url } });
-        }
+        const mimeMatch = part.url.match(/^data:([^;]+);/);
+        const mimeType = mimeMatch?.[1] ?? part.mediaType ?? "image/jpeg";
+        // Pass the full data URL — the AI SDK handles base64 extraction
+        blocks.push({ type: "image", image: part.url, mimeType });
       }
     }
 
     if (blocks.length === 0) return null as any;
     if (blocks.length === 1 && blocks[0].type === "text") {
-      return { role: msg.role as "user" | "assistant", content: blocks[0].text };
+      return { role: msg.role as "user" | "assistant", content: (blocks[0] as TextPart).text };
     }
 
     return { role: msg.role as "user" | "assistant", content: blocks };
