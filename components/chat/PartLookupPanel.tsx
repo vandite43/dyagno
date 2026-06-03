@@ -11,21 +11,35 @@ interface PartLookupPanelProps {
 }
 
 interface PartResult {
-  number: string;
+  name: string;
   description: string;
 }
 
 function extractParts(text: string): PartResult[] {
-  const matches = [...text.matchAll(/PART:\s*([A-Z0-9\-]+)(?:\s*[-–]\s*([^\n]+))?/g)];
-  return matches.map((m) => ({ number: m[1], description: m[2]?.trim() ?? "" }));
+  const matches = [...text.matchAll(/PART:\s*([^\n\-–]+?)(?:\s*[-–]\s*([^\n]+))?$/gm)];
+  return matches.map((m) => ({ name: m[1].trim(), description: m[2]?.trim() ?? "" }));
 }
 
-function partLinks(partNumber: string) {
-  const q = encodeURIComponent(partNumber);
+function partLinks(partName: string, modelNumber: string) {
+  const q = encodeURIComponent(modelNumber ? `${modelNumber} ${partName}` : partName);
+  const partQ = encodeURIComponent(partName);
   return [
-    { label: "Amazon", href: `https://www.amazon.com/s?k=${q}+appliance+part&i=garden` },
-    { label: "RepairClinic", href: `https://www.repairclinic.com/Shop-For-Parts?query=${q}` },
-    { label: "ReliableParts", href: "https://reliableparts.net/us/" },
+    {
+      label: "RepairClinic",
+      href: `https://www.repairclinic.com/Shop-For-Parts?query=${q}`,
+    },
+    {
+      label: "Sears Parts Direct",
+      href: `https://www.searspartsdirect.com/search?q=${q}`,
+    },
+    {
+      label: "AppliancePartsPros",
+      href: `https://www.appliancepartspros.com/search?q=${q}`,
+    },
+    {
+      label: "Amazon",
+      href: `https://www.amazon.com/s?k=${partQ}+${encodeURIComponent(modelNumber || "appliance")}&i=garden`,
+    },
   ];
 }
 
@@ -128,7 +142,7 @@ export function PartLookupPanel({ applianceType }: PartLookupPanelProps) {
               </div>
               <div className="space-y-2">
                 <p className="text-warm-gold/50 text-2xl font-medium">Enter a model number or describe the issue</p>
-                <p className="text-warm-gold/30 text-base">Claude will identify the exact part numbers and where to buy them</p>
+                <p className="text-warm-gold/30 text-base">Claude identifies the likely parts — search links go straight to real parts databases</p>
               </div>
             </div>
           </div>
@@ -139,18 +153,18 @@ export function PartLookupPanel({ applianceType }: PartLookupPanelProps) {
             {/* Identified parts chips */}
             {parts.length > 0 && (
               <div className="space-y-2">
-                <p className="text-xs text-warm-gold/40 font-semibold uppercase tracking-wider">Identified Parts</p>
+                <p className="text-xs text-warm-gold/40 font-semibold uppercase tracking-wider">Likely Faulty Parts</p>
                 <div className="flex flex-col gap-2">
                   {parts.map((p, i) => (
                     <div key={i} className="flex flex-col gap-2 bg-dark-chrome rounded-xl border border-steel-border px-4 py-3">
                       <div className="min-w-0">
-                        <span className="font-mono text-sm text-forge-amber font-semibold">{p.number}</span>
+                        <span className="text-sm text-forge-amber font-semibold">{p.name}</span>
                         {p.description && (
-                          <span className="text-xs text-warm-gold/60 leading-relaxed ml-2">{p.description}</span>
+                          <p className="text-xs text-warm-gold/60 leading-relaxed mt-0.5">{p.description}</p>
                         )}
                       </div>
                       <div className="flex gap-2 flex-wrap">
-                        {partLinks(p.number).map((link) => (
+                        {partLinks(p.name, modelNumber).map((link) => (
                           <a
                             key={link.label}
                             href={link.href}
