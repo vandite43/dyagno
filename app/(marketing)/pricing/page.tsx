@@ -143,48 +143,48 @@ export default function PricingPage() {
             </div>
           </div>
 
-          <div className=”grid grid-cols-1 sm:grid-cols-3 gap-6”>
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-6">
             {/* Free trial card */}
-            <div className=”rounded-2xl border border-steel-border bg-dark-carbon p-8 space-y-6 relative”>
-              <div className=”absolute -top-3 left-1/2 -translate-x-1/2”>
-                <Badge className=”bg-dark-chrome border border-forge-amber/40 text-forge-amber font-semibold”>
+            <div className="rounded-2xl border border-steel-border bg-dark-carbon p-8 space-y-6 relative">
+              <div className="absolute -top-3 left-1/2 -translate-x-1/2">
+                <Badge className="bg-dark-chrome border border-forge-amber/40 text-forge-amber font-semibold">
                   No card needed
                 </Badge>
               </div>
 
               <div>
-                <h2 className=”text-xl font-bold text-warm-gold” style={{ fontFamily: “var(--font-space-grotesk)” }}>
+                <h2 className="text-xl font-bold text-warm-gold" style={{ fontFamily: "var(--font-space-grotesk)" }}>
                   Free Trial
                 </h2>
-                <p className=”text-sm text-warm-gold/50 mt-1”>Try Dyagno risk-free for 7 days.</p>
+                <p className="text-sm text-warm-gold/50 mt-1">Try Dyagno risk-free for 7 days.</p>
               </div>
 
-              <div className=”flex items-end gap-1”>
-                <span className=”text-5xl font-bold text-warm-gold” style={{ fontFamily: “var(--font-space-grotesk)” }}>
+              <div className="flex items-end gap-1">
+                <span className="text-5xl font-bold text-warm-gold" style={{ fontFamily: "var(--font-space-grotesk)" }}>
                   $0
                 </span>
-                <span className=”text-warm-gold/40 mb-2”>/7 days</span>
+                <span className="text-warm-gold/40 mb-2">/7 days</span>
               </div>
 
               <Button
-                onClick={() => router.push(“/signup”)}
-                className=”w-full font-semibold border-steel-border text-warm-gold hover:bg-dark-chrome”
-                variant=”outline”
+                onClick={() => router.push("/signup")}
+                className="w-full font-semibold border-steel-border text-warm-gold hover:bg-dark-chrome"
+                variant="outline"
               >
                 Start free trial
               </Button>
 
-              <ul className=”space-y-3”>
+              <ul className="space-y-3">
                 {[
-                  “Full access for 7 days”,
-                  “Unlimited diagnoses”,
-                  “Photo uploads”,
-                  “Part number identification”,
-                  “Repair step guidance”,
-                  “No credit card required”,
+                  "Full access for 7 days",
+                  "Unlimited diagnoses",
+                  "Photo uploads",
+                  "Part number identification",
+                  "Repair step guidance",
+                  "No credit card required",
                 ].map((f) => (
-                  <li key={f} className=”flex items-start gap-3 text-sm text-warm-gold/70”>
-                    <span className=”text-forge-amber mt-0.5”>&#10003;</span>
+                  <li key={f} className="flex items-start gap-3 text-sm text-warm-gold/70">
+                    <span className="text-forge-amber mt-0.5">&#10003;</span>
                     {f}
                   </li>
                 ))}
@@ -196,33 +196,33 @@ export default function PricingPage() {
                 key={plan.id}
                 className={`rounded-2xl border p-8 space-y-6 relative ${
                   plan.highlighted
-                    ? “border-forge-amber bg-dark-carbon”
-                    : “border-steel-border bg-dark-carbon”
+                    ? "border-forge-amber bg-dark-carbon"
+                    : "border-steel-border bg-dark-carbon"
                 }`}
               >
                 {plan.highlighted && (
-                  <div className=”absolute -top-3 left-1/2 -translate-x-1/2”>
-                    <Badge className=”bg-forge-amber text-ink font-semibold border-0”>
+                  <div className="absolute -top-3 left-1/2 -translate-x-1/2">
+                    <Badge className="bg-forge-amber text-ink font-semibold border-0">
                       Most popular
                     </Badge>
                   </div>
                 )}
 
                 <div>
-                  <h2 className=”text-xl font-bold text-warm-gold” style={{ fontFamily: “var(--font-space-grotesk)” }}>
+                  <h2 className="text-xl font-bold text-warm-gold" style={{ fontFamily: "var(--font-space-grotesk)" }}>
                     {plan.name}
                   </h2>
-                  <p className=”text-sm text-warm-gold/50 mt-1”>{plan.description}</p>
+                  <p className="text-sm text-warm-gold/50 mt-1">{plan.description}</p>
                 </div>
 
-                <div className=”flex items-end gap-1”>
-                  <span className=”text-5xl font-bold text-warm-gold” style={{ fontFamily: “var(--font-space-grotesk)” }}>
-                    ${billing === “monthly” ? plan.monthly : Math.round(plan.yearly / 12)}
+                <div className="flex items-end gap-1">
+                  <span className="text-5xl font-bold text-warm-gold" style={{ fontFamily: "var(--font-space-grotesk)" }}>
+                    ${billing === "monthly" ? plan.monthly : Math.round(plan.yearly / 12)}
                   </span>
-                  <span className=”text-warm-gold/40 mb-2”>/mo</span>
+                  <span className="text-warm-gold/40 mb-2">/mo</span>
                 </div>
-                {billing === “yearly” && (
-                  <p className=”text-xs text-warm-gold/40 -mt-4”>Billed as ${plan.yearly}/year</p>
+                {billing === "yearly" && (
+                  <p className="text-xs text-warm-gold/40 -mt-4">Billed as ${plan.yearly}/year</p>
                 )}
 
                 <Button
@@ -230,18 +230,18 @@ export default function PricingPage() {
                   disabled={loadingPlan === plan.id}
                   className={`w-full font-semibold ${
                     plan.highlighted
-                      ? “bg-forge-amber text-ink hover:bg-forge-amber/90”
-                      : “border-steel-border text-warm-gold hover:bg-dark-chrome”
+                      ? "bg-forge-amber text-ink hover:bg-forge-amber/90"
+                      : "border-steel-border text-warm-gold hover:bg-dark-chrome"
                   }`}
-                  variant={plan.highlighted ? “default” : “outline”}
+                  variant={plan.highlighted ? "default" : "outline"}
                 >
-                  {loadingPlan === plan.id ? “Loading...” : “Get started”}
+                  {loadingPlan === plan.id ? "Loading..." : "Get started"}
                 </Button>
 
-                <ul className=”space-y-3”>
+                <ul className="space-y-3">
                   {plan.features.map((f) => (
-                    <li key={f} className=”flex items-start gap-3 text-sm text-warm-gold/70”>
-                      <span className=”text-forge-amber mt-0.5”>&#10003;</span>
+                    <li key={f} className="flex items-start gap-3 text-sm text-warm-gold/70">
+                      <span className="text-forge-amber mt-0.5">&#10003;</span>
                       {f}
                     </li>
                   ))}
