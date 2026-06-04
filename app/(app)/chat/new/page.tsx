@@ -5,19 +5,24 @@ import { useRouter } from "next/navigation";
 import { createClient } from "@/lib/supabase/browser";
 
 const APPLIANCES = [
-  { id: "refrigerator",  label: "Refrigerator",    icon: "🧊" },
-  { id: "washer",        label: "Washer",           icon: "🫧" },
-  { id: "dryer",         label: "Dryer",            icon: "♨️" },
-  { id: "dishwasher",    label: "Dishwasher",       icon: "🍽️" },
-  { id: "oven",          label: "Oven / Range",     icon: "🔥" },
-  { id: "microwave",     label: "Microwave",        icon: "📡" },
-  { id: "hvac",          label: "HVAC / Heat Pump", icon: "🌡️" },
-  { id: "freezer",       label: "Freezer",          icon: "❄️" },
-  { id: "ice-maker",     label: "Ice Maker",        icon: "🧊" },
-  { id: "garbage-disposal", label: "Disposal",     icon: "⚙️" },
-  { id: "water-heater",  label: "Water Heater",     icon: "💧" },
-  { id: "other",         label: "Other",            icon: "🔧" },
+  { id: "refrigerator",     label: "Refrigerator",    icon: "🧊" },
+  { id: "washer",           label: "Washer",           icon: "🫧" },
+  { id: "dryer",            label: "Dryer",            icon: "♨️" },
+  { id: "dishwasher",       label: "Dishwasher",       icon: "🍽️" },
+  { id: "oven",             label: "Oven / Range",     icon: "🔥" },
+  { id: "microwave",        label: "Microwave",        icon: "📡" },
+  { id: "hvac",             label: "HVAC / Heat Pump", icon: "🌡️" },
+  { id: "freezer",          label: "Freezer",          icon: "❄️" },
+  { id: "ice-maker",        label: "Ice Maker",        icon: "🧊" },
+  { id: "garbage-disposal", label: "Disposal",         icon: "⚙️" },
+  { id: "water-heater",     label: "Water Heater",     icon: "💧" },
+  { id: "other",            label: "Other",            icon: "🔧" },
 ];
+
+const LIMIT_MESSAGES: Record<string, string> = {
+  single_used: "Your single session has already been used. Upgrade to continue.",
+  daily_limit: "You have used all 3 sessions for today. Resets at midnight.",
+};
 
 export default function NewChatPage() {
   const router = useRouter();
@@ -31,37 +36,40 @@ export default function NewChatPage() {
     const { data: { user } } = await supabase.auth.getUser();
     if (!user) { setLoading(null); return; }
 
-    const { data, error } = await supabase
-      .from("conversations")
-      .insert({ user_id: user.id, title: null, appliance_type: applianceLabel })
-      .select("id")
-      .single();
+    const { data, error: rpcError } = await supabase.rpc("create_session_if_allowed", {
+      p_user_id: user.id,
+      p_appliance_type: applianceLabel,
+    });
 
-    if (data) {
-      router.replace(`/chat/${data.id}`);
-    } else {
-      setError(error?.message ?? "Failed to start diagnosis. Please try again.");
+    const result = Array.isArray(data) ? data[0] : data;
+
+    if (rpcError || !result?.ok) {
+      const reason = result?.reason ?? "unknown";
+      setError(LIMIT_MESSAGES[reason] ?? "Failed to start session. Please try again.");
       setLoading(null);
+      return;
     }
+
+    router.replace(`/chat/${result.conversation_id}`);
   }
 
   return (
     <div className="flex-1 flex flex-col items-center justify-center px-4 py-12">
       <div className="w-full max-w-2xl space-y-8">
         <div className="text-center space-y-2">
-          <h1
-            className="text-2xl font-bold text-warm-gold"
-            style={{ fontFamily: "var(--font-space-grotesk)" }}
-          >
+          <h1 className="text-2xl font-bold text-warm-gold" style={{ fontFamily: "var(--font-space-grotesk)" }}>
             What are you diagnosing?
           </h1>
           <p className="text-warm-gold/50 text-sm">Select the appliance to get started</p>
         </div>
 
         {error && (
-          <p className="text-sm text-red-400 bg-red-500/10 border border-red-400/30 rounded-lg px-4 py-2.5 text-center">
-            {error}
-          </p>
+          <div className="text-sm text-red-400 bg-red-500/10 border border-red-400/30 rounded-lg px-4 py-3 text-center space-y-2">
+            <p>{error}</p>
+            {(error.includes("single session") || error.includes("3 sessions")) && (
+              <a href="/pricing" className="inline-block text-forge-amber underline underline-offset-4 text-xs">View upgrade options</a>
+            )}
+          </div>
         )}
 
         <div className="grid grid-cols-3 sm:grid-cols-4 gap-3">

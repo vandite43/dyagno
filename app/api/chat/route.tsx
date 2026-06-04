@@ -11,13 +11,9 @@ type ContentPart = TextPart | ImagePart;
 function buildMessages(rawMessages: any[]): { role: "user" | "assistant"; content: string | ContentPart[] }[] {
   return rawMessages.slice(0, 50).map((msg) => {
     const parts: any[] = msg.parts ?? [];
-
-    if (parts.length === 0) {
-      return { role: msg.role as "user" | "assistant", content: String(msg.content ?? "") };
-    }
+    if (parts.length === 0) return { role: msg.role as "user" | "assistant", content: String(msg.content ?? "") };
 
     const blocks: ContentPart[] = [];
-
     for (const part of parts) {
       if (part.type === "text" && typeof part.text === "string") {
         const text = part.text.slice(0, 4000);
@@ -25,16 +21,12 @@ function buildMessages(rawMessages: any[]): { role: "user" | "assistant"; conten
       } else if (part.type === "file" && typeof part.url === "string") {
         const mimeMatch = part.url.match(/^data:([^;]+);/);
         const mimeType = mimeMatch?.[1] ?? part.mediaType ?? "image/jpeg";
-        // Pass the full data URL — the AI SDK handles base64 extraction
         blocks.push({ type: "image", image: part.url, mimeType });
       }
     }
 
     if (blocks.length === 0) return null as any;
-    if (blocks.length === 1 && blocks[0].type === "text") {
-      return { role: msg.role as "user" | "assistant", content: (blocks[0] as TextPart).text };
-    }
-
+    if (blocks.length === 1 && blocks[0].type === "text") return { role: msg.role as "user" | "assistant", content: (blocks[0] as TextPart).text };
     return { role: msg.role as "user" | "assistant", content: blocks };
   }).filter(Boolean);
 }
@@ -53,6 +45,28 @@ export async function POST(req: NextRequest) {
     if (!convo) return new Response("Forbidden", { status: 403 });
   }
 
+  // Fetch subscription plan for feature gating
+  const { data: sub } = await supabase.from("subscriptions").select("plan, is_one_time").eq("user_id", user.id).single();
+  const plan = sub?.plan ?? "trial";
+
+  // Count image parts in the latest user message
+  const latestMsg = rawMessages[rawMessages.length - 1];
+  const latestParts: any[] = latestMsg?.parts ?? [];
+  const incomingPhotos = latestParts.filter((p: any) => p.type === "file").length;
+
+  if (incomingPhotos > 0) {
+    if (plan === "single") {
+      return new Response("Photo uploads are not available on the Single plan.", { status: 403 });
+    }
+    if (plan === "starter" || plan === "trial") {
+      const { data: convData } = await supabase.from("conversations").select("photos_uploaded").eq("id", conversationId ?? "").single();
+      const used = convData?.photos_uploaded ?? 0;
+      if (used + incomingPhotos > 3) {
+        return new Response(`Photo limit reached for this session (3 max on Starter).`, { status: 403 });
+      }
+    }
+  }
+
   const messages = buildMessages(rawMessages);
   if (messages.length === 0) return new Response("No messages", { status: 400 });
 
@@ -62,12 +76,14 @@ export async function POST(req: NextRequest) {
     messages: messages as any,
     onFinish: async ({ text }) => {
       if (!conversationId) return;
-      await supabase.from("messages").insert({
-        conversation_id: conversationId,
-        role: "assistant",
-        content: text,
-      });
+      await supabase.from("messages").insert({ conversation_id: conversationId, role: "assistant", content: text });
       await supabase.from("conversations").update({ updated_at: new Date().toISOString() }).eq("id", conversationId);
+      // Track photos for Starter/trial
+      if (incomingPhotos > 0 && (plan === "starter" || plan === "trial")) {
+        const { data: convData } = await supabase.from("conversations").select("photos_uploaded").eq("id", conversationId).single();
+        const used = convData?.photos_uploaded ?? 0;
+        await supabase.from("conversations").update({ photos_uploaded: used + incomingPhotos }).eq("id", conversationId);
+      }
     },
   });
 
