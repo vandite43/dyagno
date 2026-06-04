@@ -28,7 +28,7 @@ export async function POST(req: NextRequest) {
   if (process.env.RESEND_API_KEY && process.env.ENTERPRISE_NOTIFY_EMAIL) {
     try {
       const resend = new Resend(process.env.RESEND_API_KEY);
-      await resend.emails.send({
+      const { data: emailData, error: emailError } = await resend.emails.send({
         from: "Dyagno <onboarding@resend.dev>",
         to: process.env.ENTERPRISE_NOTIFY_EMAIL,
         subject: `New Enterprise inquiry — ${company_name.trim()}`,
@@ -42,10 +42,16 @@ export async function POST(req: NextRequest) {
           </table>
         `,
       });
+      if (emailError) {
+        console.error("Resend error:", JSON.stringify(emailError));
+      } else {
+        console.log("Resend success:", emailData?.id);
+      }
     } catch (emailErr) {
-      console.error("Enterprise notification email failed:", emailErr);
-      // Don't fail the request if email fails — inquiry is already saved
+      console.error("Enterprise notification email threw:", emailErr);
     }
+  } else {
+    console.warn("RESEND_API_KEY or ENTERPRISE_NOTIFY_EMAIL not set — email skipped");
   }
 
   return Response.json({ ok: true });

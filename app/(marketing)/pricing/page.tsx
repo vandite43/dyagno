@@ -203,13 +203,13 @@ export default function PricingPage() {
 
       {/* Enterprise contact modal */}
       {showEnterprise && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm" onClick={e => { if (e.target === e.currentTarget) setShowEnterprise(false); }}>
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm" onClick={e => { if (e.target === e.currentTarget) { setShowEnterprise(false); setContactForm({ company: "", size: "", email: "", message: "" }); setContactSent(false); setContactError(null); } }}>
           <div className="w-full max-w-md bg-dark-carbon border border-steel-border rounded-2xl p-8 space-y-6">
             {contactSent ? (
               <div className="text-center space-y-3 py-4">
                 <p className="text-2xl font-bold text-warm-gold" style={{ fontFamily: "var(--font-space-grotesk)" }}>We'll be in touch.</p>
                 <p className="text-sm text-warm-gold/50">We typically respond within one business day.</p>
-                <Button onClick={() => { setShowEnterprise(false); setContactSent(false); }} variant="outline" className="border-steel-border text-warm-gold hover:bg-dark-chrome mt-4">Close</Button>
+                <Button onClick={() => { setShowEnterprise(false); setContactSent(false); setContactForm({ company: "", size: "", email: "", message: "" }); }} variant="outline" className="border-steel-border text-warm-gold hover:bg-dark-chrome mt-4">Close</Button>
               </div>
             ) : (
               <>
@@ -218,7 +218,7 @@ export default function PricingPage() {
                     <h2 className="text-xl font-bold text-warm-gold" style={{ fontFamily: "var(--font-space-grotesk)" }}>Contact us for Enterprise</h2>
                     <p className="text-sm text-warm-gold/50 mt-1">Min 5 seats. Custom pricing per team.</p>
                   </div>
-                  <button onClick={() => setShowEnterprise(false)} className="text-warm-gold/40 hover:text-warm-gold text-2xl leading-none">&times;</button>
+                  <button onClick={() => { setShowEnterprise(false); setContactForm({ company: "", size: "", email: "", message: "" }); setContactError(null); }} className="text-warm-gold/40 hover:text-warm-gold text-2xl leading-none">&times;</button>
                 </div>
                 <form onSubmit={handleContact} className="space-y-4">
                   <div className="space-y-1.5">
