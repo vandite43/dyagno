@@ -20,9 +20,11 @@ export default async function DashboardPage() {
 
   if (plan === "single") {
     query = query.limit(0);
-  } else if (plan === "starter" || plan === "trial") {
+  } else if (plan === "starter") {
+    // Starter: 30-day history only
     query = query.gte("created_at", thirtyDaysAgo).limit(50);
   } else {
+    // Pro, Enterprise, trial: full history
     query = query.limit(100);
   }
 

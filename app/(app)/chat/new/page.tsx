@@ -43,6 +43,19 @@ export default function NewChatPage() {
 
     const result = Array.isArray(data) ? data[0] : data;
 
+    // If RPC doesn't exist yet (SQL migration not run), fall back to direct insert
+    if (rpcError && (rpcError.code === "42883" || rpcError.message?.includes("does not exist"))) {
+      const { data: conv, error: insertError } = await supabase
+        .from("conversations")
+        .insert({ user_id: user.id, title: null, appliance_type: applianceLabel })
+        .select("id")
+        .single();
+      if (conv) { router.replace(`/chat/${conv.id}`); return; }
+      setError(insertError?.message ?? "Failed to start session. Please try again.");
+      setLoading(null);
+      return;
+    }
+
     if (rpcError || !result?.ok) {
       const reason = result?.reason ?? "unknown";
       setError(LIMIT_MESSAGES[reason] ?? "Failed to start session. Please try again.");

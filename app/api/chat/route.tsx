@@ -58,11 +58,12 @@ export async function POST(req: NextRequest) {
     if (plan === "single") {
       return new Response("Photo uploads are not available on the Single plan.", { status: 403 });
     }
-    if (plan === "starter" || plan === "trial") {
+    // Starter only — trial users get Pro-level (unlimited) access
+    if (plan === "starter") {
       const { data: convData } = await supabase.from("conversations").select("photos_uploaded").eq("id", conversationId ?? "").single();
       const used = convData?.photos_uploaded ?? 0;
       if (used + incomingPhotos > 3) {
-        return new Response(`Photo limit reached for this session (3 max on Starter).`, { status: 403 });
+        return new Response("Photo limit reached for this session (3 max on Starter).", { status: 403 });
       }
     }
   }
@@ -78,8 +79,8 @@ export async function POST(req: NextRequest) {
       if (!conversationId) return;
       await supabase.from("messages").insert({ conversation_id: conversationId, role: "assistant", content: text });
       await supabase.from("conversations").update({ updated_at: new Date().toISOString() }).eq("id", conversationId);
-      // Track photos for Starter/trial
-      if (incomingPhotos > 0 && (plan === "starter" || plan === "trial")) {
+      // Track photos for Starter only
+      if (incomingPhotos > 0 && plan === "starter") {
         const { data: convData } = await supabase.from("conversations").select("photos_uploaded").eq("id", conversationId).single();
         const used = convData?.photos_uploaded ?? 0;
         await supabase.from("conversations").update({ photos_uploaded: used + incomingPhotos }).eq("id", conversationId);
