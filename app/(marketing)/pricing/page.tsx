@@ -23,6 +23,7 @@ export default function PricingPage() {
   const [contactForm, setContactForm] = useState({ company: "", size: "", email: "", message: "" });
   const [contactSent, setContactSent] = useState(false);
   const [contactLoading, setContactLoading] = useState(false);
+  const [contactError, setContactError] = useState<string | null>(null);
   const router = useRouter();
 
   async function handleCheckout(priceId: string | undefined, planKey: string) {
@@ -45,18 +46,25 @@ export default function PricingPage() {
   async function handleContact(e: React.FormEvent) {
     e.preventDefault();
     setContactLoading(true);
-    await fetch("/api/enterprise/contact", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({
-        company_name: contactForm.company,
-        team_size: contactForm.size,
-        email: contactForm.email,
-        message: contactForm.message,
-      }),
-    });
-    setContactLoading(false);
-    setContactSent(true);
+    setContactError(null);
+    try {
+      const res = await fetch("/api/enterprise/contact", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          company_name: contactForm.company,
+          team_size: contactForm.size,
+          email: contactForm.email,
+          message: contactForm.message,
+        }),
+      });
+      if (!res.ok) throw new Error("Server error");
+      setContactSent(true);
+    } catch {
+      setContactError("Something went wrong. Please email us directly at hello@dyagno.com");
+    } finally {
+      setContactLoading(false);
+    }
   }
 
   const check = <span className="text-forge-amber mt-0.5">&#10003;</span>;
@@ -235,6 +243,9 @@ export default function PricingPage() {
                     <Label className="text-xs text-warm-gold/60">Message (optional)</Label>
                     <textarea value={contactForm.message} onChange={e => setContactForm(f => ({ ...f, message: e.target.value }))} placeholder="Tell us about your use case..." rows={3} className="w-full rounded-md border border-steel-border bg-dark-chrome text-warm-gold placeholder:text-warm-gold/25 px-3 py-2 text-sm focus:outline-none focus:ring-1 focus:ring-forge-amber resize-none" />
                   </div>
+                  {contactError && (
+                    <p className="text-sm text-red-400 bg-red-500/10 border border-red-400/30 rounded-lg px-3 py-2">{contactError}</p>
+                  )}
                   <Button type="submit" disabled={contactLoading} className="w-full bg-forge-amber text-ink font-semibold hover:bg-forge-amber/90">
                     {contactLoading ? "Sending..." : "Send message"}
                   </Button>

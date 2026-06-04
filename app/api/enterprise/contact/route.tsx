@@ -10,7 +10,7 @@ export async function POST(req: NextRequest) {
     return Response.json({ error: "Missing required fields" }, { status: 400 });
   }
 
-  // Save to DB
+  // Save to DB (best-effort — table may not exist yet if migration hasn't run)
   const supabase = await createClient();
   const { error } = await supabase.from("enterprise_inquiries").insert({
     company_name: company_name.trim(),
@@ -21,7 +21,7 @@ export async function POST(req: NextRequest) {
 
   if (error) {
     console.error("Enterprise inquiry insert failed:", error.message);
-    return Response.json({ error: "Internal error" }, { status: 500 });
+    // Don't block — still try to send the notification email
   }
 
   // Send notification email
