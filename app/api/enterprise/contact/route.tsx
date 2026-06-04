@@ -29,7 +29,7 @@ export async function POST(req: NextRequest) {
     try {
       const resend = new Resend(process.env.RESEND_API_KEY);
       const { data: emailData, error: emailError } = await resend.emails.send({
-        from: "Dyagno <onboarding@resend.dev>",
+        from: "Dyagno <notifications@dyagno.com>",
         to: process.env.ENTERPRISE_NOTIFY_EMAIL,
         subject: `New Enterprise inquiry — ${company_name.trim()}`,
         html: `
