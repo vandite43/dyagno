@@ -9,6 +9,7 @@ function isPublic(pathname: string): boolean {
   if (pathname.startsWith("/auth/")) return true;
   if (pathname.startsWith("/_next/")) return true;
   if (pathname.startsWith("/api/stripe/webhook")) return true;
+  if (pathname.startsWith("/api/enterprise/contact")) return true;
   return false;
 }
 
