@@ -6,5 +6,6 @@ export async function POST(request: NextRequest) {
   await supabase.auth.signOut();
   // Redirect to the login page on the same origin the request came from,
   // so domain-scoped auth cookies stay consistent.
-  return NextResponse.redirect(new URL("/login", request.url));
+  // Status 303 forces the redirect to a GET (default 307 would re-POST to /login → 405).
+  return NextResponse.redirect(new URL("/login", request.url), { status: 303 });
 }
