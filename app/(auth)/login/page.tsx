@@ -65,6 +65,12 @@ function LoginForm() {
 
   return (
     <div className="w-full max-w-sm space-y-8">
+      <Link
+        href="/"
+        className="inline-flex items-center gap-1.5 text-sm text-warm-gold/50 hover:text-warm-gold transition-colors"
+      >
+        <span aria-hidden>&larr;</span> Back to home
+      </Link>
       <div className="flex flex-col items-center gap-3">
         <DyagnoLogo size={48} variant="dark" />
         <div className="text-center">
