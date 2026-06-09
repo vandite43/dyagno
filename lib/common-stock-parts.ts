@@ -32,8 +32,25 @@ export const COMMON_STOCK_PARTS: StockCategory[] = [
     category: "Samsung",
     parts: [
       { name: "Dryer heating element", partNumber: "DC47-00019A", note: "Very common Samsung dryer no-heat failure" },
+      { name: "Dryer thermal fuse", partNumber: "DC47-00018A", note: "Blows on overheat; pairs with element" },
+      { name: "Dryer drum belt", partNumber: "6602-001655", note: "Squealing / drum not turning" },
       { name: "Washer drain pump", partNumber: "DC96-01414A", note: "Frequent Samsung front-load drain failure" },
       { name: "Refrigerator ice maker assembly", partNumber: "DA97-12540", note: "Notorious Samsung French-door ice maker failure" },
+    ],
+  },
+  {
+    category: "LG",
+    parts: [
+      { name: "Dryer heating element", partNumber: "5301EL1001J", note: "240V 5400W; common LG no-heat" },
+      { name: "Washer drain pump", partNumber: "4681EA2001T", note: "Top-selling LG washer pump (also fits some GE/Whirlpool)" },
+    ],
+  },
+  {
+    category: "GE",
+    parts: [
+      { name: "Dryer heating element", partNumber: "WE11M10001", note: "Fits most GE / Hotpoint dryers" },
+      { name: "Dryer drum belt", partNumber: "WE12M29", note: "89\" belt; GE dryers are belt-prone" },
+      { name: "Refrigerator water inlet valve", partNumber: "WR57X10032", note: "Ice / water dispenser fill issues" },
     ],
   },
 ];
