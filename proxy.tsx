@@ -61,14 +61,25 @@ export async function proxy(request: NextRequest) {
 
     // Fetch all subscription rows (table may have duplicates — no unique
     // constraint on user_id), then check if ANY of them is active.
-    const { data: subs } = await service
+    const { data: subs, error: subErr } = await service
       .from("subscriptions")
       .select("status, plan, is_one_time")
       .eq("user_id", user.id);
 
     const activeStatuses = ["active", "trialing"];
     const activeSub = (subs ?? []).find((s) => activeStatuses.includes(s.status));
-    if (!activeSub) return NextResponse.redirect(new URL("/?trial=expired", request.url));
+    if (!activeSub) {
+      console.error("GATE_DEBUG", JSON.stringify({
+        userId: user.id,
+        path: pathname,
+        subsCount: subs?.length ?? null,
+        subs,
+        subErr: subErr?.message ?? null,
+        hasUrl: !!process.env.NEXT_PUBLIC_SUPABASE_URL,
+        hasServiceKey: !!process.env.SUPABASE_SERVICE_ROLE_KEY,
+      }));
+      return NextResponse.redirect(new URL("/?trial=expired", request.url));
+    }
 
     // Single plan: redirect if their one session has expired
     if (activeSub.plan === "single" && activeSub.is_one_time) {
