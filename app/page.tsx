@@ -59,7 +59,7 @@ export default async function LandingPage({
     <>
       {trialExpired && (
         <div className="fixed top-16 inset-x-0 z-40 bg-forge-amber/15 border-b border-forge-amber/30 backdrop-blur-sm">
-          <div className="max-w-6xl mx-auto px-4 sm:px-6 py-2.5 text-center">
+          <div className="max-w-6xl mx-auto px-4 sm:px-6 py-2.5 flex items-center justify-center gap-x-4 gap-y-1 flex-wrap text-center">
             <p className="text-sm text-warm-gold">
               Your free trial has ended.{" "}
               <Link href="/pricing" className="text-forge-amber font-semibold underline underline-offset-2 hover:text-warm-gold">
@@ -67,6 +67,11 @@ export default async function LandingPage({
               </Link>
               .
             </p>
+            <form action="/auth/signout" method="POST">
+              <button type="submit" className="text-xs text-warm-gold/60 hover:text-warm-gold underline underline-offset-2">
+                Sign out
+              </button>
+            </form>
           </div>
         </div>
       )}
