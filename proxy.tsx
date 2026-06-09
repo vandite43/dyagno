@@ -51,24 +51,26 @@ export async function proxy(request: NextRequest) {
   const inTrial = new Date() < trialEndsAt;
 
   if (!inTrial && supabase) {
-    const { data: subscription } = await supabase
+    // Fetch all subscription rows (table may have duplicates — no unique
+    // constraint on user_id), then check if ANY of them is active.
+    const { data: subs } = await supabase
       .from("subscriptions")
       .select("status, plan, is_one_time")
-      .eq("user_id", user.id)
-      .single();
+      .eq("user_id", user.id);
+
     const activeStatuses = ["active", "trialing"];
-    const hasActiveSubscription = subscription && activeStatuses.includes(subscription.status);
-    if (!hasActiveSubscription) return NextResponse.redirect(new URL("/pricing", request.url));
+    const activeSub = (subs ?? []).find((s) => activeStatuses.includes(s.status));
+    if (!activeSub) return NextResponse.redirect(new URL("/pricing", request.url));
 
     // Single plan: redirect if their one session has expired
-    if (subscription?.plan === "single" && subscription?.is_one_time) {
-      const { data: conv } = await supabase
+    if (activeSub.plan === "single" && activeSub.is_one_time) {
+      const { data: convs } = await supabase
         .from("conversations")
         .select("expires_at")
         .eq("user_id", user.id)
         .order("created_at", { ascending: false })
-        .limit(1)
-        .single();
+        .limit(1);
+      const conv = convs?.[0];
       if (conv?.expires_at && new Date(conv.expires_at) < new Date()) {
         return NextResponse.redirect(new URL("/pricing?reason=expired", request.url));
       }
