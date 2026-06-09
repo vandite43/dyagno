@@ -69,16 +69,12 @@ export async function proxy(request: NextRequest) {
     const activeStatuses = ["active", "trialing"];
     const activeSub = (subs ?? []).find((s) => activeStatuses.includes(s.status));
     if (!activeSub) {
-      console.error("GATE_DEBUG", JSON.stringify({
-        userId: user.id,
-        path: pathname,
-        subsCount: subs?.length ?? null,
-        subs,
-        subErr: subErr?.message ?? null,
-        hasUrl: !!process.env.NEXT_PUBLIC_SUPABASE_URL,
-        hasServiceKey: !!process.env.SUPABASE_SERVICE_ROLE_KEY,
-      }));
-      return NextResponse.redirect(new URL("/?trial=expired", request.url));
+      // Temporary diagnostic encoded in the redirect URL so it can be read directly.
+      const count = subs?.length ?? -1;
+      const keyLen = (process.env.SUPABASE_SERVICE_ROLE_KEY ?? "").length;
+      const err = subErr?.message ? encodeURIComponent(subErr.message).slice(0, 60) : "none";
+      const dbg = `c${count}-k${keyLen}-e${err}`;
+      return NextResponse.redirect(new URL(`/?trial=expired&dbg=${dbg}`, request.url));
     }
 
     // Single plan: redirect if their one session has expired
