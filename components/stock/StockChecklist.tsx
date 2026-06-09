@@ -98,7 +98,6 @@ export function StockChecklist({ recommendations }: { recommendations: Rec[] }) 
                     onToggle={() => toggle(key)}
                     title={p.name}
                     subtitle={p.note}
-                    brand={p.brand}
                     partNumber={p.partNumber}
                   />
                 );
@@ -117,7 +116,6 @@ function ChecklistRow({
   title,
   subtitle,
   badge,
-  brand,
   partNumber,
 }: {
   checked: boolean;
@@ -125,7 +123,6 @@ function ChecklistRow({
   title: string;
   subtitle?: string;
   badge?: string;
-  brand?: string;
   partNumber?: string;
 }) {
   return (
@@ -153,7 +150,6 @@ function ChecklistRow({
                 {partNumber}
               </span>
             )}
-            {brand && <span className="text-[11px] text-warm-gold/40">{brand}</span>}
           </div>
           {subtitle && <p className="text-xs text-warm-gold/40 mt-0.5">{subtitle}</p>}
         </div>
