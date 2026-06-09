@@ -1,8 +1,9 @@
 import { redirect } from "next/navigation";
 import Link from "next/link";
-import { Bookmark, Lock } from "lucide-react";
+import { Lock } from "lucide-react";
 import { createClient } from "@/lib/supabase/server";
 import { Button } from "@/components/ui/button";
+import { StockChecklist } from "@/components/stock/StockChecklist";
 
 interface Rec {
   partName: string;
@@ -65,39 +66,12 @@ export default async function StockPage() {
     <div className="max-w-2xl mx-auto px-4 py-10">
       <div className="mb-6">
         <h1 className="text-2xl font-bold text-warm-gold" style={{ fontFamily: "var(--font-space-grotesk)" }}>
-          Stock recommendations
+          Stock checklist
         </h1>
-        <p className="text-sm text-warm-gold/40 mt-1">Parts you&apos;ve diagnosed 3 or more times.</p>
+        <p className="text-sm text-warm-gold/40 mt-1">Track which repair parts you keep on hand.</p>
       </div>
 
-      {recs.length === 0 ? (
-        <div className="rounded-2xl border border-dashed border-steel-border bg-dark-carbon p-12 text-center">
-          <Bookmark size={28} className="text-warm-gold/20 mx-auto mb-3" />
-          <p className="text-warm-gold/40 text-sm">No recurring parts yet. Run more diagnoses and your most-needed parts will appear here.</p>
-        </div>
-      ) : (
-        <ul className="space-y-2">
-          {recs.map((r, i) => (
-            <li key={i} className="flex items-center justify-between gap-4 bg-dark-carbon border border-steel-border rounded-xl px-4 py-3">
-              <div className="min-w-0 flex items-center gap-3">
-                <Bookmark size={16} className="text-forge-amber shrink-0" />
-                <div className="min-w-0">
-                  <p className="text-sm font-medium text-warm-gold truncate">
-                    {r.partName}
-                    {r.partNumber && r.partNumber !== r.partName && (
-                      <span className="font-mono text-forge-amber text-xs ml-2">{r.partNumber}</span>
-                    )}
-                  </p>
-                  {r.appliance && <p className="text-xs text-warm-gold/40 mt-0.5">{r.appliance}</p>}
-                </div>
-              </div>
-              <span className="shrink-0 text-xs font-semibold text-forge-amber bg-forge-amber/15 border border-forge-amber/30 rounded-full px-2.5 py-1">
-                {r.count}&times;
-              </span>
-            </li>
-          ))}
-        </ul>
-      )}
+      <StockChecklist recommendations={recs} />
     </div>
   );
 }
