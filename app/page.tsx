@@ -47,9 +47,29 @@ const TESTIMONIALS = [
   },
 ];
 
-export default function LandingPage() {
+export default async function LandingPage({
+  searchParams,
+}: {
+  searchParams: Promise<{ trial?: string }>;
+}) {
+  const { trial } = await searchParams;
+  const trialExpired = trial === "expired";
+
   return (
     <>
+      {trialExpired && (
+        <div className="fixed top-16 inset-x-0 z-40 bg-forge-amber/15 border-b border-forge-amber/30 backdrop-blur-sm">
+          <div className="max-w-6xl mx-auto px-4 sm:px-6 py-2.5 text-center">
+            <p className="text-sm text-warm-gold">
+              Your free trial has ended.{" "}
+              <Link href="/pricing" className="text-forge-amber font-semibold underline underline-offset-2 hover:text-warm-gold">
+                Upgrade to keep using Dyagno
+              </Link>
+              .
+            </p>
+          </div>
+        </div>
+      )}
       <header className="fixed top-0 inset-x-0 z-50 border-b border-steel-border bg-dark-chrome/90 backdrop-blur-sm">
         <div className="max-w-6xl mx-auto px-4 sm:px-6 h-16 flex items-center justify-between">
           <Link href="/" className="flex items-center">

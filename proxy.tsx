@@ -60,7 +60,7 @@ export async function proxy(request: NextRequest) {
 
     const activeStatuses = ["active", "trialing"];
     const activeSub = (subs ?? []).find((s) => activeStatuses.includes(s.status));
-    if (!activeSub) return NextResponse.redirect(new URL("/pricing", request.url));
+    if (!activeSub) return NextResponse.redirect(new URL("/?trial=expired", request.url));
 
     // Single plan: redirect if their one session has expired
     if (activeSub.plan === "single" && activeSub.is_one_time) {
@@ -72,7 +72,7 @@ export async function proxy(request: NextRequest) {
         .limit(1);
       const conv = convs?.[0];
       if (conv?.expires_at && new Date(conv.expires_at) < new Date()) {
-        return NextResponse.redirect(new URL("/pricing?reason=expired", request.url));
+        return NextResponse.redirect(new URL("/?trial=expired", request.url));
       }
     }
   }
