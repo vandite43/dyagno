@@ -1,8 +1,9 @@
 "use client";
 
 import { useRef, useState } from "react";
-import { ImagePlus, Send } from "lucide-react";
+import { ImagePlus, Send, Mic } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { getSpeechRecognition, type SpeechRecognitionLike } from "@/lib/speech";
 
 interface ChatInputProps {
   onSend: (text: string, imageUrls: string[]) => void;
@@ -14,7 +15,11 @@ export function ChatInput({ onSend, onUploadImage, isLoading }: ChatInputProps) 
   const [text, setText] = useState("");
   const [pendingImages, setPendingImages] = useState<{ url: string; preview: string }[]>([]);
   const [uploading, setUploading] = useState(false);
+  const [listening, setListening] = useState(false);
   const fileRef = useRef<HTMLInputElement>(null);
+  const recognitionRef = useRef<SpeechRecognitionLike | null>(null);
+
+  const speechSupported = typeof window !== "undefined" && getSpeechRecognition() !== null;
 
   async function handleFileChange(e: React.ChangeEvent<HTMLInputElement>) {
     const files = Array.from(e.target.files ?? []);
@@ -30,6 +35,30 @@ export function ChatInput({ onSend, onUploadImage, isLoading }: ChatInputProps) 
     setPendingImages((prev) => [...prev, ...results]);
     setUploading(false);
     e.target.value = "";
+  }
+
+  function toggleListening() {
+    if (listening) {
+      recognitionRef.current?.stop();
+      setListening(false);
+      return;
+    }
+    const SR = getSpeechRecognition();
+    if (!SR) return;
+    const recognition = new SR();
+    recognition.lang = "en-US";
+    recognition.interimResults = false;
+    recognition.continuous = false;
+    recognition.maxAlternatives = 1;
+    recognition.onresult = (e) => {
+      const transcript = e.results?.[0]?.[0]?.transcript ?? "";
+      if (transcript) setText((prev) => (prev ? `${prev} ${transcript}` : transcript));
+    };
+    recognition.onend = () => setListening(false);
+    recognition.onerror = () => setListening(false);
+    recognitionRef.current = recognition;
+    setListening(true);
+    recognition.start();
   }
 
   function handleSubmit(e: React.FormEvent) {
@@ -87,6 +116,21 @@ export function ChatInput({ onSend, onUploadImage, isLoading }: ChatInputProps) 
           <ImagePlus size={18} />
         </button>
 
+        {/* Voice input button */}
+        <button
+          type="button"
+          disabled={busy || !speechSupported}
+          onClick={toggleListening}
+          title={speechSupported ? "Speak your message" : "Voice input not supported in this browser"}
+          className={`shrink-0 w-11 h-11 flex items-center justify-center rounded-lg transition-colors disabled:opacity-30 disabled:cursor-not-allowed ${
+            listening
+              ? "text-forge-amber bg-forge-amber/15 animate-pulse"
+              : "text-warm-gold/40 hover:text-forge-amber hover:bg-dark-chrome"
+          }`}
+        >
+          <Mic size={18} />
+        </button>
+
         <input
           type="text"
           value={text}
@@ -97,7 +141,7 @@ export function ChatInput({ onSend, onUploadImage, isLoading }: ChatInputProps) 
               handleSubmit(e as unknown as React.FormEvent);
             }
           }}
-          placeholder="Describe the fault, error code, or symptom..."
+          placeholder={listening ? "Listening..." : "Describe the fault, error code, or symptom..."}
           disabled={busy}
           className="flex-1 h-11 rounded-lg border border-steel-border bg-dark-chrome text-warm-gold placeholder:text-warm-gold/30 px-3 text-sm focus:outline-none focus:ring-1 focus:ring-forge-amber disabled:opacity-50"
         />

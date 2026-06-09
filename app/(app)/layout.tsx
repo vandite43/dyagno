@@ -43,6 +43,7 @@ export default async function AppLayout({
               <Link href="/dashboard" className="text-warm-gold/60 hover:text-warm-gold transition-colors">Diagnoses</Link>
               <Link href="/parts" className="text-warm-gold/60 hover:text-warm-gold transition-colors">Part Lookup</Link>
               <Link href="/diagrams" className="text-warm-gold/60 hover:text-warm-gold transition-colors">Diagrams</Link>
+              <Link href="/stock" className="text-warm-gold/60 hover:text-warm-gold transition-colors">Stock</Link>
               <Link href="/settings" className="text-warm-gold/60 hover:text-warm-gold transition-colors">Settings</Link>
             </nav>
           </div>

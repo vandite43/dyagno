@@ -1,14 +1,25 @@
 "use client";
 
-import { useEffect, useRef } from "react";
+import { useEffect, useRef, useState } from "react";
+import { Volume2, ThumbsUp, ThumbsDown } from "lucide-react";
 import type { UIMessage } from "ai";
+import { VideoLinks } from "./VideoLinks";
+import { stripMarkdown, speechSynthesisSupported } from "@/lib/speech";
 
 interface MessageListProps {
   messages: UIMessage[];
   isLoading?: boolean;
+  applianceType?: string | null;
 }
 
-export function MessageList({ messages, isLoading }: MessageListProps) {
+function textOf(message: UIMessage): string {
+  return message.parts
+    .filter((p) => p.type === "text")
+    .map((p) => (p as { text: string }).text)
+    .join("\n");
+}
+
+export function MessageList({ messages, isLoading, applianceType }: MessageListProps) {
   const bottomRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
@@ -34,49 +45,56 @@ export function MessageList({ messages, isLoading }: MessageListProps) {
   return (
     <div className="flex-1 overflow-y-auto py-6">
       <div className="max-w-2xl mx-auto px-4 space-y-5">
-        {messages.map((message) => (
-          <div
-            key={message.id}
-            className={`flex ${message.role === "user" ? "justify-end" : "justify-start"}`}
-          >
-            {message.role === "assistant" && (
-              <div className="w-6 h-6 rounded-md bg-forge-amber/20 border border-forge-amber/30 flex items-center justify-center shrink-0 mt-1 mr-2">
-                <span className="text-forge-amber text-[10px] font-bold">D</span>
-              </div>
-            )}
+        {messages.map((message, idx) => {
+          const isAssistant = message.role === "assistant";
+          const prevUser = isAssistant
+            ? [...messages.slice(0, idx)].reverse().find((m) => m.role === "user")
+            : undefined;
+          const videoQuery = `${applianceType ?? ""} ${prevUser ? textOf(prevUser) : ""}`.trim();
+          const fullText = textOf(message);
+          const hasSteps = /^\s*\d+\.\s/m.test(fullText);
+
+          return (
             <div
-              className={`max-w-[85%] rounded-2xl px-4 py-3 text-sm leading-relaxed ${
-                message.role === "user"
-                  ? "bg-forge-amber text-ink font-medium rounded-br-sm"
-                  : "bg-dark-carbon border border-steel-border text-warm-gold rounded-bl-sm"
-              }`}
+              key={message.id}
+              className={`flex ${message.role === "user" ? "justify-end" : "justify-start"}`}
             >
-              {message.parts.map((part, i) => {
-                if (part.type === "text") {
-                  return (
-                    <FormattedText
-                      key={i}
-                      text={part.text}
-                      isAssistant={message.role === "assistant"}
-                    />
-                  );
-                }
-                if (part.type === "file" && part.mediaType?.startsWith("image/")) {
-                  return (
-                    // eslint-disable-next-line @next/next/no-img-element
-                    <img
-                      key={i}
-                      src={part.url}
-                      alt="Attached image"
-                      className="max-w-full rounded-lg mt-2 border border-steel-border"
-                    />
-                  );
-                }
-                return null;
-              })}
+              {isAssistant && (
+                <div className="w-6 h-6 rounded-md bg-forge-amber/20 border border-forge-amber/30 flex items-center justify-center shrink-0 mt-1 mr-2">
+                  <span className="text-forge-amber text-[10px] font-bold">D</span>
+                </div>
+              )}
+              <div className={isAssistant ? "max-w-[85%]" : "max-w-[85%]"}>
+                <div
+                  className={`rounded-2xl px-4 py-3 text-sm leading-relaxed ${
+                    message.role === "user"
+                      ? "bg-forge-amber text-ink font-medium rounded-br-sm"
+                      : "bg-dark-carbon border border-steel-border text-warm-gold rounded-bl-sm"
+                  }`}
+                >
+                  {message.parts.map((part, i) => {
+                    if (part.type === "text") {
+                      return <FormattedText key={i} text={part.text} isAssistant={isAssistant} />;
+                    }
+                    if (part.type === "file" && part.mediaType?.startsWith("image/")) {
+                      return (
+                        // eslint-disable-next-line @next/next/no-img-element
+                        <img key={i} src={part.url} alt="Attached image" className="max-w-full rounded-lg mt-2 border border-steel-border" />
+                      );
+                    }
+                    return null;
+                  })}
+
+                  {isAssistant && hasSteps && <VideoLinks query={videoQuery} enabled={!isLoading} />}
+                </div>
+
+                {isAssistant && fullText && (
+                  <MessageActions messageId={message.id} text={fullText} />
+                )}
+              </div>
             </div>
-          </div>
-        ))}
+          );
+        })}
 
         {isLoading && (
           <div className="flex justify-start">
@@ -97,6 +115,78 @@ export function MessageList({ messages, isLoading }: MessageListProps) {
   );
 }
 
+function MessageActions({ messageId, text }: { messageId: string; text: string }) {
+  const [speaking, setSpeaking] = useState(false);
+  const [vote, setVote] = useState<1 | -1 | null>(null);
+  const [showThanks, setShowThanks] = useState(false);
+  const ttsSupported = speechSynthesisSupported();
+
+  function toggleSpeak() {
+    if (!ttsSupported) return;
+    if (speaking) {
+      window.speechSynthesis.cancel();
+      setSpeaking(false);
+      return;
+    }
+    window.speechSynthesis.cancel();
+    const utter = new SpeechSynthesisUtterance(stripMarkdown(text));
+    utter.rate = 0.95;
+    utter.pitch = 1.0;
+    utter.lang = "en-US";
+    utter.onend = () => setSpeaking(false);
+    utter.onerror = () => setSpeaking(false);
+    setSpeaking(true);
+    window.speechSynthesis.speak(utter);
+  }
+
+  async function sendFeedback(value: 1 | -1) {
+    if (vote !== null) return;
+    setVote(value);
+    setShowThanks(true);
+    setTimeout(() => setShowThanks(false), 2000);
+    try {
+      await fetch(`/api/messages/${messageId}/feedback`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ value }),
+      });
+    } catch {
+      // ignore — UI already reflects the vote
+    }
+  }
+
+  return (
+    <div className="flex items-center gap-1 mt-1.5 ml-1">
+      {ttsSupported && (
+        <button
+          onClick={toggleSpeak}
+          title="Read aloud"
+          className={`p-1.5 rounded-md transition-colors ${speaking ? "text-forge-amber animate-pulse" : "text-warm-gold/30 hover:text-forge-amber"}`}
+        >
+          <Volume2 size={14} />
+        </button>
+      )}
+      <button
+        onClick={() => sendFeedback(1)}
+        disabled={vote !== null}
+        title="Helpful"
+        className={`p-1.5 rounded-md transition-colors disabled:cursor-default ${vote === 1 ? "text-forge-amber" : "text-warm-gold/30 hover:text-forge-amber disabled:hover:text-warm-gold/30"}`}
+      >
+        <ThumbsUp size={14} />
+      </button>
+      <button
+        onClick={() => sendFeedback(-1)}
+        disabled={vote !== null}
+        title="Not helpful"
+        className={`p-1.5 rounded-md transition-colors disabled:cursor-default ${vote === -1 ? "text-forge-amber" : "text-warm-gold/30 hover:text-forge-amber disabled:hover:text-warm-gold/30"}`}
+      >
+        <ThumbsDown size={14} />
+      </button>
+      {showThanks && <span className="text-[11px] text-warm-gold/50 ml-1 transition-opacity">Thanks for the feedback</span>}
+    </div>
+  );
+}
+
 function FormattedText({ text, isAssistant }: { text: string; isAssistant: boolean }) {
   if (!isAssistant) return <span>{text}</span>;
 
@@ -108,6 +198,31 @@ function FormattedText({ text, isAssistant }: { text: string; isAssistant: boole
 
   while (i < lines.length) {
     const line = lines[i];
+
+    // Stock recommendation card
+    if (/^STOCK RECOMMENDATION:/i.test(line.trim())) {
+      const body = line.trim().replace(/^STOCK RECOMMENDATION:\s*/i, "");
+      const segs = body.split(/\s*[—–-]\s*/);
+      const name = segs[0]?.trim() ?? "";
+      const number = segs[1]?.trim() ?? "";
+      const reason = segs.slice(2).join(" - ").trim();
+      elements.push(
+        <div key={nextKey()} className="flex gap-2.5 bg-forge-amber/10 border border-forge-amber/40 rounded-lg px-3 py-2.5 my-2">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#EF9F27" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="shrink-0 mt-0.5">
+            <path d="M19 21l-7-5-7 5V5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2z" />
+          </svg>
+          <div className="min-w-0">
+            <p className="text-xs font-semibold text-forge-amber">Stock recommendation</p>
+            <p className="text-sm text-warm-gold mt-0.5">
+              {name}{number ? <span className="font-mono text-forge-amber"> · {number}</span> : null}
+            </p>
+            {reason && <p className="text-xs text-warm-gold/60 mt-0.5 leading-relaxed">{reason}</p>}
+          </div>
+        </div>
+      );
+      i++;
+      continue;
+    }
 
     if (/^\d+\.\s/.test(line)) {
       const items: string[] = [];

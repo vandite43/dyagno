@@ -2,6 +2,7 @@ import { streamText } from "ai";
 import { anthropic } from "@ai-sdk/anthropic";
 import { createClient } from "@/lib/supabase/server";
 import { DYAGNO_SYSTEM_PROMPT } from "@/lib/ai/system-prompt";
+import { parsePartMentions } from "@/lib/parse-parts";
 import type { NextRequest } from "next/server";
 
 type TextPart = { type: "text"; text: string };
@@ -45,9 +46,15 @@ export async function POST(req: NextRequest) {
     if (!convo) return new Response("Forbidden", { status: 403 });
   }
 
-  // Fetch subscription plan for feature gating
+  // Fetch subscription plan for feature gating + appliance for part tracking
   const { data: sub } = await supabase.from("subscriptions").select("plan, is_one_time").eq("user_id", user.id).single();
   const plan = sub?.plan ?? "trial";
+
+  let appliance: string | null = null;
+  if (conversationId) {
+    const { data: c } = await supabase.from("conversations").select("appliance_type").eq("id", conversationId).single();
+    appliance = c?.appliance_type ?? null;
+  }
 
   // Count image parts in the latest user message
   const latestMsg = rawMessages[rawMessages.length - 1];
@@ -79,6 +86,21 @@ export async function POST(req: NextRequest) {
       if (!conversationId) return;
       await supabase.from("messages").insert({ conversation_id: conversationId, role: "assistant", content: text });
       await supabase.from("conversations").update({ updated_at: new Date().toISOString() }).eq("id", conversationId);
+
+      // Parse part mentions and record them (best-effort — table may not exist yet)
+      const parts = parsePartMentions(text);
+      if (parts.length > 0) {
+        await supabase.from("part_mentions").insert(
+          parts.map((p) => ({
+            user_id: user.id,
+            session_id: conversationId,
+            part_name: p.partName,
+            part_number: p.partNumber,
+            appliance,
+          }))
+        );
+      }
+
       // Track photos for Starter only
       if (incomingPhotos > 0 && plan === "starter") {
         const { data: convData } = await supabase.from("conversations").select("photos_uploaded").eq("id", conversationId).single();

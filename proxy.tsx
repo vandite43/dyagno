@@ -7,6 +7,7 @@ const AUTH_PATHS = ["/login", "/signup"];
 function isPublic(pathname: string): boolean {
   if (PUBLIC_PATHS.includes(pathname)) return true;
   if (pathname.startsWith("/auth/")) return true;
+  if (pathname.startsWith("/share/")) return true;
   if (pathname.startsWith("/_next/")) return true;
   if (pathname.startsWith("/api/stripe/webhook")) return true;
   if (pathname.startsWith("/api/enterprise/contact")) return true;
