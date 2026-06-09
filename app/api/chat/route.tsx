@@ -47,8 +47,9 @@ export async function POST(req: NextRequest) {
   }
 
   // Fetch subscription plan for feature gating + appliance for part tracking
-  const { data: sub } = await supabase.from("subscriptions").select("plan, is_one_time").eq("user_id", user.id).single();
-  const plan = sub?.plan ?? "trial";
+  const { data: subRows } = await supabase.from("subscriptions").select("plan, status").eq("user_id", user.id);
+  const activeRow = (subRows ?? []).find((s) => s.status === "active" || s.status === "trialing");
+  const plan = activeRow?.plan ?? "trial";
 
   let appliance: string | null = null;
   if (conversationId) {

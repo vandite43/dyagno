@@ -60,25 +60,21 @@ export async function proxy(request: NextRequest) {
     );
 
     // Fetch all subscription rows (table may have duplicates — no unique
-    // constraint on user_id), then check if ANY of them is active.
-    const { data: subs, error: subErr } = await service
+    // constraint on user_id). Only select columns guaranteed to exist so the
+    // gate never crashes if optional tier columns haven't been migrated yet.
+    const { data: subs } = await service
       .from("subscriptions")
-      .select("status, plan, is_one_time")
+      .select("status, plan")
       .eq("user_id", user.id);
 
     const activeStatuses = ["active", "trialing"];
     const activeSub = (subs ?? []).find((s) => activeStatuses.includes(s.status));
-    if (!activeSub) {
-      // Temporary diagnostic encoded in the redirect URL so it can be read directly.
-      const count = subs?.length ?? -1;
-      const keyLen = (process.env.SUPABASE_SERVICE_ROLE_KEY ?? "").length;
-      const err = subErr?.message ? encodeURIComponent(subErr.message).slice(0, 60) : "none";
-      const dbg = `c${count}-k${keyLen}-e${err}`;
-      return NextResponse.redirect(new URL(`/?trial=expired&dbg=${dbg}`, request.url));
-    }
+    if (!activeSub) return NextResponse.redirect(new URL("/?trial=expired", request.url));
 
-    // Single plan: redirect if their one session has expired
-    if (activeSub.plan === "single" && activeSub.is_one_time) {
+    // Single plan: redirect if their one session has expired.
+    // (expires_at may not be migrated yet — a missing column just yields no row,
+    // which allows access rather than crashing.)
+    if (activeSub.plan === "single") {
       const { data: convs } = await service
         .from("conversations")
         .select("expires_at")
