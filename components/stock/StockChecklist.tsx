@@ -42,8 +42,8 @@ export function StockChecklist({ recommendations }: { recommendations: Rec[] }) 
     setChecked((prev) => ({ ...prev, [key]: !prev[key] }));
   }
 
-  // Count total / stocked across curated list
-  const allCuratedKeys = COMMON_STOCK_PARTS.flatMap((c) => c.parts.map((p) => `${c.category}:${p.name}`));
+  // Count total / stocked across curated list (keys must match the rows below)
+  const allCuratedKeys = COMMON_STOCK_PARTS.flatMap((c) => c.parts.map((p, idx) => `${c.category}:${p.name}:${idx}`));
   const stockedCount = allCuratedKeys.filter((k) => checked[k]).length;
 
   return (
@@ -89,8 +89,8 @@ export function StockChecklist({ recommendations }: { recommendations: Rec[] }) 
           <div key={cat.category} className="space-y-2">
             <p className="text-xs font-semibold text-warm-gold/60">{cat.category}</p>
             <ul className="space-y-2">
-              {cat.parts.map((p) => {
-                const key = `${cat.category}:${p.name}`;
+              {cat.parts.map((p, idx) => {
+                const key = `${cat.category}:${p.name}:${idx}`;
                 return (
                   <ChecklistRow
                     key={key}
@@ -98,6 +98,8 @@ export function StockChecklist({ recommendations }: { recommendations: Rec[] }) 
                     onToggle={() => toggle(key)}
                     title={p.name}
                     subtitle={p.note}
+                    brand={p.brand}
+                    partNumber={p.partNumber}
                   />
                 );
               })}
@@ -115,12 +117,16 @@ function ChecklistRow({
   title,
   subtitle,
   badge,
+  brand,
+  partNumber,
 }: {
   checked: boolean;
   onToggle: () => void;
   title: string;
   subtitle?: string;
   badge?: string;
+  brand?: string;
+  partNumber?: string;
 }) {
   return (
     <li>
@@ -140,7 +146,15 @@ function ChecklistRow({
           {checked && <Check size={13} className="text-ink" strokeWidth={3} />}
         </span>
         <div className="min-w-0 flex-1">
-          <p className={`text-sm font-medium ${checked ? "text-warm-gold" : "text-warm-gold/90"}`}>{title}</p>
+          <div className="flex items-baseline gap-2 flex-wrap">
+            <p className={`text-sm font-medium ${checked ? "text-warm-gold" : "text-warm-gold/90"}`}>{title}</p>
+            {partNumber && (
+              <span className="font-mono text-xs text-forge-amber bg-dark-chrome border border-forge-amber/20 px-1.5 py-0.5 rounded">
+                {partNumber}
+              </span>
+            )}
+            {brand && <span className="text-[11px] text-warm-gold/40">{brand}</span>}
+          </div>
           {subtitle && <p className="text-xs text-warm-gold/40 mt-0.5">{subtitle}</p>}
         </div>
         {badge && (
