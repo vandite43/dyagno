@@ -1,4 +1,5 @@
 import { NextResponse, type NextRequest } from "next/server";
+import { createClient as createServiceClient } from "@supabase/supabase-js";
 import { updateSession } from "@/lib/supabase/middleware";
 
 const PUBLIC_PATHS = ["/", "/pricing", "/login", "/signup"];
@@ -50,10 +51,17 @@ export async function proxy(request: NextRequest) {
   const trialEndsAt = new Date(createdAt.getTime() + 7 * 24 * 60 * 60 * 1000);
   const inTrial = new Date() < trialEndsAt;
 
-  if (!inTrial && supabase) {
+  if (!inTrial) {
+    // Read subscriptions with the service-role key so the gate is not affected
+    // by Row Level Security on the subscriptions table.
+    const service = createServiceClient(
+      process.env.NEXT_PUBLIC_SUPABASE_URL!,
+      process.env.SUPABASE_SERVICE_ROLE_KEY!
+    );
+
     // Fetch all subscription rows (table may have duplicates — no unique
     // constraint on user_id), then check if ANY of them is active.
-    const { data: subs } = await supabase
+    const { data: subs } = await service
       .from("subscriptions")
       .select("status, plan, is_one_time")
       .eq("user_id", user.id);
@@ -64,7 +72,7 @@ export async function proxy(request: NextRequest) {
 
     // Single plan: redirect if their one session has expired
     if (activeSub.plan === "single" && activeSub.is_one_time) {
-      const { data: convs } = await supabase
+      const { data: convs } = await service
         .from("conversations")
         .select("expires_at")
         .eq("user_id", user.id)
